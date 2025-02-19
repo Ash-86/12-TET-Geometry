@@ -1,6 +1,9 @@
+// 12-TET Geometry
+// Copyright (C) 2025 Ashraf El Droubi [Ash-86]
+
 import QtQuick 
 import QtQuick.Controls
-import MuseScore 
+import MuseScore 3.0
 import Muse.UiComponents 
 import Muse.Ui 
 
