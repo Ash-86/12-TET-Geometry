@@ -1,2 +1,8 @@
 # 12-TET-Geometry
-Interactive Circle of 12-TET notes for MuseScore 4.x
+
+An educational interactive circle of fifths for MuseScore 4.x
+
+
+
+https://github.com/user-attachments/assets/cff954bd-1b07-4164-840a-6a6e4868f7a0
+
