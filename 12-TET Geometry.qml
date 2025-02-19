@@ -1,5 +1,5 @@
 import QtQuick 
-import QtQuick.Controls 2
+import QtQuick.Controls
 import MuseScore 
 import Muse.UiComponents 
 import Muse.Ui 
