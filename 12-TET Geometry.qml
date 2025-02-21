@@ -34,11 +34,11 @@ MuseScore {
         property var cy: height / 2 // center y         
         property var angle: 2 * Math.PI / 12  // angle of each slice, 12 total slices  
         property var phase: Math.PI / 12 // phase shift to center the slices
+        property var rotationAngle: 0.0 // rotation angle for animation
 
         function drawSlice(index, hovered, selectedNotes, down) {
-            
             var ctx = canvas.getContext("2d")
-            
+
             var startAngle = index * angle + phase
             var endAngle = (index + 1) * angle + phase    
             
@@ -63,17 +63,17 @@ MuseScore {
             ctx.lineJoin = "round"
 
             var i = selectedNotes.indexOf(1);
-            var px = cx + innRadius * Math.cos(i*angle)
-            var py = cy + innRadius * Math.sin(i*angle)
+            var px = cx + innRadius * Math.cos(i*angle + rotationAngle)
+            var py = cy + innRadius * Math.sin(i*angle + rotationAngle)
             ctx.moveTo(px, py)
             ctx.beginPath();
 
             for (var i = 0; i < 12; i++) {
                 if (selectedNotes[i] == 1) {
-                    px = cx + innRadius * Math.cos((i+1)*angle)
-                    py = cy + innRadius * Math.sin((i+1)*angle)
+                    px = cx + innRadius * Math.cos((i + 1)*angle + rotationAngle)
+                    py = cy + innRadius * Math.sin((i + 1)*angle + rotationAngle)
                     ctx.lineTo(px, py)
-                } else {}
+                }
             }
             var sum = selectedNotes.reduce(function (s, x) {
                 return s + x
@@ -184,19 +184,57 @@ MuseScore {
         FlatButton {                
             icon: IconCode.ARROW_LEFT
             onClicked: {                
-                var lastElement = mouseArea.selectedNotes.shift(); // Remove the last element
-                mouseArea.selectedNotes.push(lastElement); // Add it to the beginning
-                canvas.requestPaint();
+                rotationTimerLeft.start()                
             }
+            Timer {
+                id: rotationTimerLeft
+                interval: 10    // Delay in milliseconds 
+                repeat: true
+                running: false  // Start the timer
+                onTriggered: {
+                    if (canvas.rotationAngle > 0.1 -canvas.angle) {
+                        canvas.rotationAngle -= 0.1;
+                        canvas.requestPaint();
+                    } 
+                    else {
+                        rotationTimerLeft.stop();
+                        canvas.rotationAngle = 0   
+                        var firstElement = mouseArea.selectedNotes.shift(); // Remove the first element
+                        mouseArea.selectedNotes.push(firstElement); // Add it to the end
+                        canvas.requestPaint();
+                    }         
+                }
+            }                
         }
+        
         FlatButton {
             icon: IconCode.ARROW_RIGHT
-            onClicked: {
-                var lastElement = mouseArea.selectedNotes.pop(); // Remove the last element
-                mouseArea.selectedNotes.unshift(lastElement); // Add it to the beginning
-                canvas.requestPaint();
+            onClicked: {                
+                rotationTimerRight.start()                
             }
-        }
+            Timer {
+                id: rotationTimerRight
+                interval: 10    // Delay in milliseconds 
+                repeat: true
+                running: false  // Start the timer
+                onTriggered: {
+                    if (canvas.rotationAngle < canvas.angle - 0.1) {
+                        canvas.rotationAngle += 0.1;
+                        canvas.requestPaint();
+                    } 
+                    else {
+                        rotationTimerRight.stop();
+                        canvas.rotationAngle = 0   
+                        var lastElement = mouseArea.selectedNotes.pop(); // Remove the last element
+                        mouseArea.selectedNotes.unshift(lastElement); // Add it to the beginning
+                        canvas.requestPaint();
+                    }         
+                }
+            }  
+        }        
+         
+        
+
         FlatButton {
             text: "Reset"
             onClicked: {
