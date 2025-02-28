@@ -18,7 +18,10 @@ MuseScore {
     height: 500
 
     onRun: {}
-    
+
+    property var modelNotes: ["C", "G", "D", "A", "E", "B", "F#/Gb", "D♭", "A♭", "E♭", "B♭", "F"]
+    property var modelPitches: [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]
+    property var currentModel: modelNotes
     property var chromatic: true
 
     Canvas {
@@ -150,9 +153,9 @@ MuseScore {
             drawPolygon(mouseArea.selectedNotes)
         }
     }
-    Repeater {
-        model: ["C", "G", "D", "A", "E", "B", "F#/Gb", "D♭", "A♭", "E♭", "B♭", "F"]
 
+    Repeater {        
+        model: currentModel
         delegate: Item {
             property var n: chromatic ? (index + 9) % 12 : (index + 3) * 7 % 12            
             x: canvas.x + canvas.width / 2 + Math.cos(n*canvas.angle) * canvas.centerRadius
@@ -164,6 +167,17 @@ MuseScore {
             }
         }
     }    
+
+    FlatButton {
+        id: spelling
+        text: "Pitch class"
+        isNarrow: true
+        onClicked: {
+            spelling.text = spelling.text == "Notes" ? "Pitch class" : "Notes"
+            currentModel =  currentModel == modelNotes ? modelPitches : modelNotes
+        }
+    }        
+
     FlatButton {
         anchors.left: buttonRow.left
         anchors.bottom: buttonRow.top
