@@ -164,12 +164,27 @@ MuseScore {
             }
         }
     }    
-    
+    FlatButton {
+        anchors.left: buttonRow.left
+        anchors.bottom: buttonRow.top
+        anchors.bottomMargin: 10
+        isNarrow: true
+        text: "Invert"
+        onClicked: {
+            mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x) {
+                return (x + 1) % 2
+            });
+            canvas.requestPaint();
+        }
+    }
+        
     Row {
+        id: buttonRow
         anchors.top: canvas.bottom
         anchors.topMargin: 20
         anchors.horizontalCenter: root.horizontalCenter
         spacing: 10
+        
         FlatButton {
             text: chromatic ? "Chromatic" : "Fifths"            
             onClicked: {                
@@ -179,8 +194,8 @@ MuseScore {
                 });
                 canvas.requestPaint();
             }
-            
-        }
+        }            
+
         FlatButton {                
             icon: IconCode.ARROW_LEFT
             onClicked: {                
@@ -232,8 +247,6 @@ MuseScore {
                 }
             }  
         }        
-         
-        
 
         FlatButton {
             text: "Reset"
