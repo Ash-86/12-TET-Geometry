@@ -157,7 +157,7 @@ MuseScore {
     Repeater {        
         model: currentModel
         delegate: Item {
-            property var n: chromatic ? (index + 9) % 12 : (index + 3) * 7 % 12            
+            property var n: chromatic ? (index + 9) % 12 : (index + 3) * 7 % 12  //+3 compensates for index not starting as C          
             x: canvas.x + canvas.width / 2 + Math.cos(n*canvas.angle) * canvas.centerRadius
             y: canvas.y + canvas.height / 2 + Math.sin(n*canvas.angle) * canvas.centerRadius
             StyledTextLabel {
@@ -166,17 +166,32 @@ MuseScore {
                 font: ui.theme.largeBodyBoldFont    
             }
         }
-    }    
+    } 
 
-    FlatButton {
-        id: spelling
-        text: "Pitch class"
-        isNarrow: true
-        onClicked: {
-            spelling.text = spelling.text == "Notes" ? "Pitch class" : "Notes"
-            currentModel =  currentModel == modelNotes ? modelPitches : modelNotes
+    Column{
+        spacing: 5
+    
+        FlatButton {
+            id: spelling
+            text: "Pitch class"
+            isNarrow: true
+            onClicked: {
+                spelling.text = spelling.text == "Notes" ? "Pitch class" : "Notes"
+                currentModel =  currentModel == modelNotes ? modelPitches : modelNotes
+            }
         }
-    }        
+        FlatButton {
+            text: chromatic ? "Chromatic" : "Fifths"  
+            isNarrow: true          
+            onClicked: {                
+                chromatic = !chromatic;                    
+                mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x, i) {
+                    return mouseArea.selectedNotes[i * 7 % 12];
+                });
+                canvas.requestPaint();
+            }
+        }
+    }              
 
     FlatButton {
         anchors.left: buttonRow.left
@@ -185,11 +200,11 @@ MuseScore {
         isNarrow: true
         text: "Invert"
         onClicked: {
-            mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x) {
-                return (x + 1) % 2
+            mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x, i) {
+                return mouseArea.selectedNotes[(12 - i +4) % 12] //+2 compensates for index not starting as C
             });
             canvas.requestPaint();
-        }
+        }        
     }
         
     Row {
@@ -199,16 +214,15 @@ MuseScore {
         anchors.horizontalCenter: root.horizontalCenter
         spacing: 10
         
-        FlatButton {
-            text: chromatic ? "Chromatic" : "Fifths"            
-            onClicked: {                
-                chromatic = !chromatic;                    
-                mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x, i) {
-                    return mouseArea.selectedNotes[i * 7 % 12];
+        FlatButton{
+            text: "Complement"
+            onClicked: {
+                mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x) {
+                    return (x + 1) % 2
                 });
                 canvas.requestPaint();
-            }
-        }            
+            }            
+        }              
 
         FlatButton {                
             icon: IconCode.ARROW_LEFT
