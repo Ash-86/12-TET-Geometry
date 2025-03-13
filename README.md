@@ -2,7 +2,11 @@
 
 An educational interactive circle of fifths for MuseScore 4.x
 
-https://github.com/user-attachments/assets/ef8a3542-f3e3-463f-8f6c-766fa4ddf4c2
+
+
+https://github.com/user-attachments/assets/3b3d338d-335a-4d1a-83f2-d450957fd1f6
+
+
 
 # Support
 
