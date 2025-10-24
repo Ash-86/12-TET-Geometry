@@ -11,7 +11,7 @@ MuseScore {
     id: root
     title: "12-TET Geometry"
     description: "Description goes here"
-    version: "1.0"
+    version: "2.0"
     pluginType: "dialog"
     thumbnailName: "12tet.jpg"
     width: 450
@@ -23,6 +23,108 @@ MuseScore {
     property var modelPitches: [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5]
     property var currentModel: modelNotes
     property var chromatic: true
+
+    property var polygonColors: [ui.theme.accentColor, '#d1a7a7', '#c5c6a7', '#a3abd1', ui.theme.buttonColor] // Colors for each polygon
+    property var selectedNotes: [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Polygon 1
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Polygon 2
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Polygon 3
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  // Polygon 4
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  // none
+    ]
+    property var activePoly: 0 // Index of the currently active polygon
+
+    
+    //  property var polygons : [
+    //     new polygon(ui.theme.accentColor),
+    //     new polygon("red"),
+    //     new polygon("green"),
+    //     new polygon("yellow")
+    // ]
+
+    
+
+    // function polygon(color) {        
+
+    //     this.notes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    //     this.color = color     
+    //     this.active = false
+        
+
+    //     this.setActive = function() {
+    //         // Deactivate the currently active polygon
+    //         if (Polygon.active) {
+    //             Polygon.active.active = false;
+    //         }
+    //         // Set this polygon as the active one
+    //         Polygon.active = this;
+    //         this.active = true;
+    //     }
+
+    //     this.toggleNote = function (index) {
+    //         this.notes[index] = (this.notes[index] + 1) % 2;
+    //     }
+
+    //     this.reset = function() {
+    //         this.notes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    //     }
+
+    //     this.invert = function() {
+    //         var inverted = [];
+    //         for (var i = 0; i < 12; i++) {
+    //             inverted[i] = this.notes[(12 - i) % 12];
+    //         }
+    //         this.notes = inverted;
+    //     }
+
+    //     this.complement = function() {
+    //         for (var i = 0; i < 12; i++) {
+    //             this.notes[i] = (this.notes[i] + 1) % 2;
+    //         }
+    //     }
+
+    //     this.transpose = function(steps)  {
+    //         var transposed = [];
+    //         for (var i = 0; i < 12; i++) {
+    //             transposed[i] = this.notes[(i - steps + 12) % 12];
+    //         }
+    //         this.notes = transposed;
+    //     }       
+
+
+    //     this.draw = function(ctx, cx, cy, innRadius, angle, rotationAngle) {
+    //         ctx.strokeStyle = color;
+    //         ctx.lineWidth = 4;
+    //         ctx.lineCap = "round";
+    //         ctx.lineJoin = "round";
+
+    //         var i = this.notes.indexOf(1);
+    //         if (i === -1) return; // No points selected, skip drawing
+
+    //         var px = cx + innRadius * Math.cos(i * angle + rotationAngle);
+    //         var py = cy + innRadius * Math.sin(i * angle + rotationAngle);
+    //         ctx.moveTo(px, py);
+    //         ctx.beginPath();
+
+    //         for (var i = 0; i < 12; i++) {
+    //             if (this.notes[i] == 1) {
+    //                 px = cx + innRadius * Math.cos((i + 1) * angle + rotationAngle);
+    //                 py = cy + innRadius * Math.sin((i + 1) * angle + rotationAngle);
+    //                 ctx.lineTo(px, py);
+    //             }
+    //         }
+    //         var sum = this.notes.reduce(function (s, x) {
+    //             return s + x;
+    //         }, 0);
+
+    //         if (sum > 2) {
+    //             ctx.closePath();
+    //         }
+
+    //         ctx.stroke();
+    //     }
+    // }
+
 
     Canvas {
         id: canvas
@@ -39,15 +141,18 @@ MuseScore {
         property var phase: Math.PI / 12 // phase shift to center the slices
         property var rotationAngle: 0.0 // rotation angle for animation
 
-        function drawSlice(index, hovered, selectedNotes, down) {
-            var ctx = canvas.getContext("2d")
+        
 
-            var startAngle = index * angle + phase
-            var endAngle = (index + 1) * angle + phase    
+        function drawSlice(i) {
+
+            var ctx = canvas.getContext("2d")            
+               
+            var startAngle = i * angle + phase
+            var endAngle = (i + 1) * angle + phase    
             
             ctx.strokeStyle = ui.theme.backgroundPrimaryColor
-            ctx.lineWidth = hovered ? 2 : 10
-            ctx.fillStyle = !down ? (!selectedNotes ? ui.theme.buttonColor : ui.theme.accentColor) : ui.theme.strokeColor
+            ctx.lineWidth = i == mouseArea.hoveredIndex && activePoly !=4 ? 2 : 10
+            ctx.fillStyle =  mouseArea.hoveredIndex == i && mouseArea.down ? (activePoly !=4 ? ui.theme.backgroundSecondaryColor : ui.theme.buttonColor) : (selectedNotes[activePoly][i] ? polygonColors[activePoly] : ui.theme.buttonColor)
             
             ctx.beginPath()         
             ctx.arc(cx, cy, outRadius, startAngle, endAngle)
@@ -55,30 +160,32 @@ MuseScore {
             ctx.arc(cx, cy, innRadius, endAngle, startAngle, true)   
             ctx.closePath()
             ctx.fill()
-            ctx.stroke()
+            ctx.stroke()            
         }
 
-        function drawPolygon(selectedNotes) {
+        function drawPolygon(p) {
             var ctx = canvas.getContext("2d")
-            ctx.strokeStyle = ui.theme.accentColor
+            ctx.strokeStyle = polygonColors[p]
             ctx.lineWidth = 4
             ctx.lineCap = "round"
             ctx.lineJoin = "round"
 
-            var i = selectedNotes.indexOf(1);
-            var px = cx + innRadius * Math.cos(i*angle + rotationAngle)
-            var py = cy + innRadius * Math.sin(i*angle + rotationAngle)
+            var a = activePoly == 4 || p == activePoly ? 1 : 0// animation factor- fix inactive polygons
+
+            var i = selectedNotes[p].indexOf(1);
+            var px = cx + innRadius * Math.cos(i*angle + rotationAngle*a)
+            var py = cy + innRadius * Math.sin(i*angle + rotationAngle*a)
             ctx.moveTo(px, py)
             ctx.beginPath();
 
             for (var i = 0; i < 12; i++) {
-                if (selectedNotes[i] == 1) {
-                    px = cx + innRadius * Math.cos((i + 1)*angle + rotationAngle)
-                    py = cy + innRadius * Math.sin((i + 1)*angle + rotationAngle)
+                if (selectedNotes[p][i] == 1) {
+                    px = cx + innRadius * Math.cos((i + 1)*angle + rotationAngle*a)
+                    py = cy + innRadius * Math.sin((i + 1)*angle + rotationAngle*a)
                     ctx.lineTo(px, py)
                 }
             }
-            var sum = selectedNotes.reduce(function (s, x) {
+            var sum = selectedNotes[p].reduce(function (s, x) {
                 return s + x
             }, 0)
 
@@ -97,7 +204,7 @@ MuseScore {
             property int hoveredIndex: -1 // store the index of the hovered slice
             property int index
             property var down: false
-            property var selectedNotes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            // property var selectedNotes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             property var sum: 0
 
             onPositionChanged: {
@@ -131,11 +238,14 @@ MuseScore {
             }
             onPressed: {
                 down = true;
+                if (hoveredIndex == -1) {
+                    activePoly = 4
+                }
                 canvas.requestPaint()
                 console.log("clickes on", mouseArea.hoveredIndex)
             }
             onReleased: {
-                selectedNotes[index] = (selectedNotes[index] + 1) % 2
+                selectedNotes[activePoly][index] = (selectedNotes[activePoly][index] + 1) % 2
                 down = false
                 canvas.requestPaint()          
             }
@@ -143,14 +253,16 @@ MuseScore {
         onPaint: {
             var ctx = canvas.getContext("2d")
             ctx.clearRect(0, 0, width, height)
-            for (var i = 0; i < 12; i++) {
-                drawSlice(i, false, mouseArea.selectedNotes[i], false)
+            
+            for (var i = 0; i < 12; i++) {                
+                drawSlice(i)                              
             }
-            if (mouseArea.hoveredIndex != -1) {
-                // Draw only the current slice with hovered state
-                drawSlice(mouseArea.hoveredIndex, true, mouseArea.selectedNotes[mouseArea.hoveredIndex], mouseArea.down)
+                
+            for (var p = 0; p < 4; p++) {  
+                if (visiblePolygons[p] == true) {               
+                    drawPolygon(p)
+                }
             }
-            drawPolygon(mouseArea.selectedNotes)
         }
     }
 
@@ -184,25 +296,70 @@ MuseScore {
             text: chromatic ? "Chromatic" : "Fifths"  
             isNarrow: true          
             onClicked: {                
-                chromatic = !chromatic;                    
-                mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x, i) {
-                    return mouseArea.selectedNotes[i * 7 % 12];
-                });
+                chromatic = !chromatic; 
+                for (var p = 0; p < 4; p++) {                  
+                    selectedNotes[p] = selectedNotes[p].map(function (x, i) {
+                        return selectedNotes[p][i * 7 % 12];
+                    });
+                }
                 canvas.requestPaint();
             }
         }
-    }              
+    }       
 
+    Column {
+        spacing: 5
+        anchors.right: root.right
+        anchors.top: root.top
+        anchors.bottomMargin: 10
+
+        Repeater {
+            model: 4
+            ButtonGroup { id: polygonBtnGroup; exclusive: true }
+            delegate: FlatRadioButton {
+                
+                ButtonGroup.group: polygonBtnGroup
+                text: "G " + (index + 1)                
+                width: 40                 
+                checked: activePoly == index
+                
+                checkedColor: polygonColors[index] 
+                hoverHitColor: polygonColors[index]
+
+                onClicked: {
+                    activePoly = index; 
+                    canvas.requestPaint()                                     
+                }      
+                onDoubleClicked: {
+                    visiblePolygons[activePoly] = !visiblePolygons[activePoly]                    
+                    canvas.requestPaint()
+                }         
+            }
+        }
+    }       
+
+    property var visiblePolygons: [true, true, true, true]
     FlatButton {
         anchors.left: buttonRow.left
         anchors.bottom: buttonRow.top
         anchors.bottomMargin: 10
         isNarrow: true
         text: "Invert"
+        accentButton: true
+        accentColor: polygonColors[activePoly]
         onClicked: {
-            mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x, i) {
-                return mouseArea.selectedNotes[(12 - i +4) % 12] //+2 compensates for index not starting as C
-            });
+            if (activePoly !=4 ) {
+                selectedNotes[activePoly] = selectedNotes[activePoly].map(function (x, i) {
+                    return selectedNotes[activePoly][(12 - i + 4) % 12] //+2 compensates for index not starting as C
+                });
+            }
+            else {
+                for (var p = 0; p < 4; p++) {                  
+                    selectedNotes[p] = selectedNotes[p].map(function (x, i) {
+                        return selectedNotes[p][(12 - i + 4) % 12] //+2 compensates for index not starting as C
+                    });
+                }     
+            }       
             canvas.requestPaint();
         }        
     }
@@ -216,16 +373,30 @@ MuseScore {
         
         FlatButton{
             text: "Complement"
+            accentButton: true
+            accentColor: polygonColors[activePoly]
             onClicked: {
-                mouseArea.selectedNotes = mouseArea.selectedNotes.map(function (x) {
-                    return (x + 1) % 2
-                });
+                if (activePoly !=4 ) {
+                    selectedNotes[activePoly] = selectedNotes[activePoly].map(function (x) {
+                        return (x + 1) % 2
+                    });
+
+                }
+                else {
+                    for (var p = 0; p < 4; p++) {                  
+                        selectedNotes[p] = selectedNotes[p].map(function (x) {
+                            return (x + 1) % 2
+                        });
+                    }  
+                }              
                 canvas.requestPaint();
             }            
         }              
 
         FlatButton {                
             icon: IconCode.ARROW_LEFT
+            accentButton: true
+            accentColor: polygonColors[activePoly]
             onClicked: {                
                 rotationTimerLeft.start()                
             }
@@ -241,9 +412,18 @@ MuseScore {
                     } 
                     else {
                         rotationTimerLeft.stop();
-                        canvas.rotationAngle = 0   
-                        var firstElement = mouseArea.selectedNotes.shift(); // Remove the first element
-                        mouseArea.selectedNotes.push(firstElement); // Add it to the end
+                        canvas.rotationAngle = 0 
+                        if (activePoly !=4 ) {
+                            var firstElement = selectedNotes[activePoly].shift(); // Remove the first element
+                            selectedNotes[activePoly].push(firstElement); // Add it to the end
+
+                        }
+                        else {
+                            for (var p = 0; p < 4; p++) {   
+                                var firstElement = selectedNotes[p].shift(); // Remove the first element
+                                selectedNotes[p].push(firstElement); // Add it to the end
+                            }
+                        }
                         canvas.requestPaint();
                     }         
                 }
@@ -252,6 +432,8 @@ MuseScore {
         
         FlatButton {
             icon: IconCode.ARROW_RIGHT
+            accentButton: true
+            accentColor: polygonColors[activePoly]
             onClicked: {                
                 rotationTimerRight.start()                
             }
@@ -267,9 +449,18 @@ MuseScore {
                     } 
                     else {
                         rotationTimerRight.stop();
-                        canvas.rotationAngle = 0   
-                        var lastElement = mouseArea.selectedNotes.pop(); // Remove the last element
-                        mouseArea.selectedNotes.unshift(lastElement); // Add it to the beginning
+                        canvas.rotationAngle = 0 
+                        if (activePoly !=4 ) {
+                            var lastElement = selectedNotes[activePoly].pop(); // Remove the last element
+                            selectedNotes[activePoly].unshift(lastElement); // Add it to the beginning
+                        }
+                        else {  
+                            for (var p = 0; p < 4; p++) {                  
+                                var lastElement = selectedNotes[p].pop(); // Remove the last element
+                                selectedNotes[p].unshift(lastElement); // Add it to the beginning
+                            }
+                        }
+                        
                         canvas.requestPaint();
                     }         
                 }
@@ -278,10 +469,177 @@ MuseScore {
 
         FlatButton {
             text: "Reset"
+            accentButton: true
+            accentColor: polygonColors[activePoly]
             onClicked: {
-                mouseArea.selectedNotes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                if (activePoly !=4 ) {
+                    selectedNotes[activePoly] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                }
+                else {
+                    selectedNotes = [
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Polygon 1
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Polygon 2
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Polygon 3
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  // Polygon 4
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  // none
+                    ]
+                    activePoly = 0
+                }
                 canvas.requestPaint();
             }
+        }        
+    }     
+
+    FlatButton {
+        icon: IconCode.INFO
+        anchors.left: buttonRow.right 
+        anchors.bottom: buttonRow.bottom
+        anchors.leftMargin: 10        
+        onClicked: dialog.open()
+        StyledDialogView {
+            id: dialog
+            width: 400
+            height: 400
+            margins : 20
+            contentWidth: 300
+            
+            StyledTextLabel {
+                anchors.fill : parent
+                anchors.centerIn: parent
+                
+                text:  qsTr("<h2>12-TET Geometry</h2><br><br>This plugin visualizes the twelve-tone equal temperament (12-TET) system using a circular geometry. Users can interactively select pitch classes to form polygons representing various musical structures. The plugin supports operations such as inversion and complementation of selected pitch classes, as well as transposition through rotation. Users can toggle between chromatic and circle of fifths arrangements, enhancing their understanding of pitch relationships in 12-TET.<br><br> © 2025 Ashraf EL Droubi <br><br> This software is licensed under the <a href=\"%2\">GNU General Public License v3.0</a>   <br><br><a href=\"%1\">GitHub repository</a>").arg("https://github.com/Ash-86/12-TET-Geometry").arg("https://www.gnu.org/licenses/gpl-3.0.html") // qsTr("12-TET Geometry\n\n\n This plugin visualizes the twelve-tone equal temperament (12-TET) system using a circular geometry. Users can interactively select pitch classes to form polygons representing various musical structures. The plugin supports operations such as inversion and complementation of selected pitch classes, as well as transposition through rotation. Users can toggle between chromatic and circle of fifths arrangements, enhancing their understanding of pitch relationships in 12-TET.\n\n © 2025 Ashraf EL Droubi \n\n This software is licensed under the GNU General Public License v3.0. See the LICENSE file or visit https://www.gnu.org/licenses/gpl-3.0.html for details.\n\n   <a href=\"%1\">GitHub repository</a>").arg("https://github.com/Ash-86/12-TET-Geometry")
+                
+                wrapMode: Text.WordWrap
+            }
         }
-    }       
+
+    } 
+
+    
+
+    // FlatButton { ///MenuButton
+    //     anchors.right: buttonRow.left
+    //     anchors.bottom: buttonRow.bottom
+    //     anchors.rightMargin: 10   
+            
+        
+    //     onClicked: menu.open()
+    //     icon: IconCode.MENU_THREE_DOTS
+    //     //text: "Triadic Tone-clock steering"
+        // StyledMenu {
+        //     anchors.right: buttonRow.left
+        //     anchors.bottom: buttonRow.bottom
+        //     anchors.rightMargin: 10   
+                
+            
+        //     // onClicked: menu.open()
+        //     icon: IconCode.MENU_THREE_DOTS
+        //     id: menu                
+        //     //title: "Triadic Tone-clock steering"
+        //     // StyledMenuItem {
+        //     //     modelData: ["I: 1-1", "II: 1-2", "III: 1-3", "IV: 1-4", "V: 1-5", "VI: 2-2", "VII: 2-3", "VIII: 2-4", "IX: 2-5", "X: 3-3", "XI: 3-4", "XII: 4-4"]
+                
+        //     // }
+        //     // Repeater{
+        //     //     model: ["I: 1-1", "II: 1-2", "III: 1-3", "IV: 1-4", "V: 1-5", "VI: 2-2", "VII: 2-3", "VIII: 2-4", "IX: 2-5", "X: 3-3", "XI: 3-4", "XII: 4-4"]
+                
+        //     //     delegate: MenuItem{
+        //     //         text: modelData
+        //     //         property var ipf: [
+        //     //             [1, 1], [1,2], [1,3], [1,4], [1,5], [2,2], [2,3], [2,4], [2,5], [3,3], [3,4], [4,4]
+        //     //         ] 
+        //     //         onTriggered: {
+        //     //             var ipfx = Array(12).fill(0)
+        //     //             ipfx[0] = 1
+        //     //             ipfx[ipf[index][0]] = 1
+        //     //             ipfx[ipf[index][0] + ipf[index][1]] = 1                            
+        //     //             ipfx = ipfx.slice(4).concat(ipfx.slice(0, 4)) // C starts at 4
+        //     //             ipfSteering(ipfx, -6)
+        //     //             canvas.requestPaint()
+        //     //         }
+        //     //     }
+        //     // }                    
+        // }
+    // }
+
+    
+        
+        Row {
+            spacing: 12
+            anchors.right: buttonRow.left
+            anchors.bottom: buttonRow.bottom
+            anchors.rightMargin: 10   
+
+            component SampleMenuButton : FlatButton {
+                    
+                onClicked: {                    
+
+                    var items = [
+                        {id: 0, icon: null, title: "Triadic Tone-clock steering", enabled: false},
+                        {id: 1, icon: null, title: "I: 1-1", enabled: true},
+                        {id: 2, icon: null, title: "II: 1-2", enabled: true},
+                        {id: 3, icon: null, title: "III: 1-3", enabled: true},
+                        {id: 4, icon: null, title: "IV: 1-4", enabled: true},
+                        {id: 5, icon: null, title: "V: 1-5", enabled: true},
+                        {id: 6, icon: null, title: "VI: 2-2", enabled: true},
+                        {id: 7, icon: null, title: "VII: 2-3", enabled: true},
+                        {id: 8, icon: null, title: "VIII: 2-4", enabled: true},
+                        {id: 9, icon: null, title: "IX: 2-5", enabled: true},
+                        {id: 10, icon: null, title: "X: 3-3", enabled: true},
+                        {id: 11, icon: null, title: "XI: 3-4", enabled: true},
+                        {id: 12, icon: null, title: "XII: 4-4", enabled: true}
+                    ]
+                        //["I: 1-1", "II: 1-2", "III: 1-3", "IV: 1-4", "V: 1-5", "VI: 2-2", "VII: 2-3", "VIII: 2-4", "IX: 2-5", "X: 3-3", "XI: 3-4", "XII: 4-4"]
+                       
+                    menuLoader.toggleOpened(items)
+                }
+
+                StyledMenuLoader {
+                    id: menuLoader
+
+                    onHandleMenuItem: function(itemId) {
+                        console.log("selected " + itemId)
+                        var ipf =[[1, 1], [1,2], [1,3], [1,4], [1,5], [2,2], [2,3], [2,4], [2,5], [3,3], [3,4], [4,4] ] 
+                        var ipfx = Array(12).fill(0)
+                        ipfx[0] = 1
+                        ipfx[ipf[itemId-1][0]] = 1
+                        ipfx[ipf[itemId-1][0] + ipf[itemId-1][1]] = 1      
+                        if (itemId == 10) {
+                            ipfx[9] = 1
+                        }                     
+                        ipfx = ipfx.slice(4).concat(ipfx.slice(0, 4)) // C starts at 4
+                        var rotations = [-6, -6, -2, -2, -3, 6, 6, -1, -6, 1, -6, -6]
+                        var invComp = [1, 1, 1, 1, 1, -1, -3, 1, 1, -1, 1, 1]
+                        ipfSteering(ipfx, rotations[itemId-1], invComp[itemId-1])
+                        activePoly = 4
+                        canvas.requestPaint()
+                    }                    
+                }
+            }           
+
+            SampleMenuButton {
+                icon: IconCode.MENU_THREE_DOTS
+                mouseArea.acceptedButtons: Qt.LeftButton | Qt.RightButton
+            }
+        }
+    
+
+    
+
+    function ipfSteering(ipf, rotation, invComp) {
+        var transpose = ipf.slice(rotation).concat(ipf.slice(0, rotation))
+        var inverse = ipf.map(function (x, i) {return ipf[(12 - i + 4) % 12]}) //+2 compensates for index not starting as C
+        var invTranspose = transpose.map(function (x, i) {return transpose[(12 - i + 4) % 12]}) //+2 compensates for index not starting as C
+        selectedNotes = [
+            ipf,  
+            transpose,
+            inverse.slice(invComp).concat(inverse.slice(0, invComp)),    
+            invTranspose.slice(invComp).concat(invTranspose.slice(0, invComp)),
+            Array(12).fill(0)    
+        ]
+    }
+
+    
+    
+        
 }
